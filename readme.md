@@ -1,36 +1,70 @@
-<p align="center">
-  <img src="/images/wled_logo_akemi.png">
-  <a href="https://github.com/MoonModules/WLED/releases"><img src="https://img.shields.io/github/release/MoonModules/WLED.svg?style=flat-square"></a>
-  <a href="https://raw.githubusercontent.com/MoonModules/WLED/mdev/LICENSE"><img src="https://img.shields.io/github/license/MoonModules/wled?color=blue&style=flat-square"></a>
-  <a href="https://wled.discourse.group"><img src="https://img.shields.io/discourse/topics?colorB=blue&label=forum&server=https%3A%2F%2Fwled.discourse.group%2F&style=flat-square"></a>
-  <a href="https://discord.gg/4CQRmfR"><img src="https://img.shields.io/discord/700041398778331156.svg?colorB=blue&label=discord&style=flat-square"></a>
-  <a href="https://mm.kno.wled.ge"><img src="https://img.shields.io/badge/quick_start-wiki-blue.svg?style=flat-square"></a>
-  <a href="https://github.com/Aircoookie/WLED-App"><img src="https://img.shields.io/badge/app-wled-blue.svg?style=flat-square"></a>
-  <a href="https://gitpod.io/#https://github.com/MoonModules/WLED"><img src="https://img.shields.io/badge/Gitpod-ready--to--code-blue?style=flat-square&logo=gitpod"></a>
+# Audioreactive usermod
 
-  </p>
+Enables controlling LEDs via audio input. Audio source can be a microphone or analog-in (AUX) using an appropriate adapter.
+Supported microphones range from analog (MAX4466, MAX9814, ...) to digital (INMP441, ICS-43434, ...).
 
-# Welcome to WLED MoonModules! ✨
+Does audio processing and provides data structure that specially written effects can use.
 
-<img width="400" alt="image" src="https://user-images.githubusercontent.com/91013628/230378884-5a0f15ee-1aa2-4998-9df7-ade9f32a3d0f.png">
+**does not** provide effects or draw anything to an LED strip/matrix.
 
-MoonModules/WLED is a fork of [Aircoookie/WLED](https://github.com/Aircoookie/WLED) which contains latest merge of v0.14 of WLED with [additional features](https://mm.kno.wled.ge/moonmodules/what-is-moonmodules/).
+## Additional Documentation
+This usermod is an evolution of [SR-WLED](https://github.com/atuline/WLED), and a lot of documentation and information can be found in the [SR-WLED wiki](https://github.com/atuline/WLED/wiki):
+* [getting started with audio](https://github.com/atuline/WLED/wiki/First-Time-Setup#sound)
+* [Sound settings](https://github.com/atuline/WLED/wiki/Sound-Settings) - similar to options on the usemod settings page in WLED.
+* [Digital Audio](https://github.com/atuline/WLED/wiki/Digital-Microphone-Hookup)
+* [Analog Audio](https://github.com/atuline/WLED/wiki/Analog-Audio-Input-Options)
+* [UDP Sound sync](https://github.com/atuline/WLED/wiki/UDP-Sound-Sync)
 
-This fork is created by members of the [Atuline/WLED](https://github.com/atuline/WLED) team to make development against v0.14 possible while still preserving [Atuline/WLED v0.13.x](https://github.com/atuline/WLED/tree/dev) as a stable and supported version. The Atuline/WLED fork is also called WLED SR (Sound Reactive).
 
-More info here: <a href="https://mm.kno.wled.ge/moonmodules/what-is-moonmodules/">what-is-moonmodules</a>
+## Supported MCUs
+This audioreactive usermod works best on "classic ESP32" (dual core), and on ESP32-S3 which also has dual core and hardware floating point support. 
 
-<a href="https://www.paypal.com/donate?business=moonmodules@icloud.com"><img src="https://img.shields.io/badge/send%20me%20a%20small%20gift-paypal-blue.svg" alt="HTML tutorial" style="max-width: 100%;"></a>
-Donations will be used to buy WLED related hardware, software or drinks shared with the contributors of this repo.
+It will compile successfully for ESP32-S2 and ESP32-C3, however might not work well, as other WLED functions will become slow. Audio processing requires a lot of computing power, which can be problematic on smaller MCUs like -S2 and -C3. 
 
-## License 
-WLED-MM is licensed under the [EUPL-1.2](https://joinup.ec.europa.eu/collection/eupl) or later. 
-The official license text is [available in 23 languages](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12).
+Analog audio is only possible on "classic" ESP32, but not on other MCUs like ESP32-S3.
 
-## Contributing
-We welcome contributions to this project! See [contributing](https://github.com/MoonModules/WLED/blob/mdev/CONTRIBUTING.md) for more information.
-> We would like to have this repository in a polite and friendly atmosphere, so please be kind and respectful to others. For more details, look at [Code of Conduct](https://github.com/MoonModules/WLED/blob/mdev/CODE_OF_CONDUCT.md).
+Currently ESP8266 is not supported, due to low speed and small RAM of this chip. 
+There are however plans to create a lightweight audioreactive for the 8266, with reduced features.
+## Installation 
 
-## *Disclaimer:*   
+### using latest _arduinoFFT_ library
 
-Using this software is the users responsibility as it is not bug free. Therefore contributors of this repo are not reliable for anything including but not limited to spontaneous combustion of the entire led strip, the house and the inevitable heat death of the universe
+* `build_flags` = `-D USERMOD_AUDIOREACTIVE`
+* `lib_deps`= `https://github.com/kosme/arduinoFFT#develop @ 1.9.2`
+
+## Configuration
+
+All parameters are runtime configurable. Some may require a hard reset after changing them (I2S microphone or selected GPIOs).
+
+If you want to define default GPIOs during compile time, use the following (default values in parentheses):
+
+- `-D SR_DMTYPE=x` : defines digital microphone type: 0=analog, 1=generic I2S (default), 2=ES7243 I2S, 3=SPH0645 I2S, 4=generic I2S with master clock, 5=PDM I2S
+- `-D AUDIOPIN=x`  : GPIO for analog microphone/AUX-in (36)
+- `-D I2S_SDPIN=x` : GPIO for SD pin on digital microphone (32)
+- `-D I2S_WSPIN=x` : GPIO for WS pin on digital microphone (15)
+- `-D I2S_CKPIN=x` : GPIO for SCK pin on digital microphone (14)
+- `-D MCLK_PIN=x`  : GPIO for master clock pin on digital Line-In boards (-1)
+- `-D ES7243_SDAPIN` : GPIO for I2C SDA pin on ES7243 microphone (-1)
+- `-D ES7243_SCLPIN` : GPIO for I2C SCL pin on ES7243 microphone (-1)
+
+Other options:
+
+- `-D UM_AUDIOREACTIVE_ENABLE` : makes usermod default enabled (not the same as include into build option!)
+- `-D UM_AUDIOREACTIVE_DYNAMICS_LIMITER_OFF` : disables rise/fall limiter default
+
+**NOTE** I2S is used for analog audio sampling. Hence, the analog *buttons* (i.e. potentiometers) are disabled when running this usermod with an analog microphone.
+
+### Advanced Compile-Time Options
+You can use the following additional flags in your `build_flags`
+* `-D SR_SQUELCH=x`  : Default "squelch" setting (10)
+* `-D SR_GAIN=x`     : Default "gain" setting (60)
+* `-D I2S_USE_RIGHT_CHANNEL`: Use RIGHT instead of LEFT channel (not recommended unless you strictly need this).
+* `-D I2S_USE_16BIT_SAMPLES`: Use 16bit instead of 32bit for internal sample buffers. Reduces sampling quality, but frees some RAM ressources (not recommended unless you absolutely need this).
+* `-D I2S_GRAB_ADC1_COMPLETELY`: Experimental: continuously sample analog ADC microphone. Only effective on ESP32. WARNING this _will_ cause conflicts(lock-up) with any analogRead() call.
+* `-D MIC_LOGGER`     : (debugging) Logs samples from the microphone to serial USB. Use with serial plotter (Arduino IDE)
+* `-D SR_DEBUG`       : (debugging) Additional error diagnostics and debug info on serial USB.
+
+## Release notes
+
+* 2022-06 Ported from [soundreactive WLED](https://github.com/atuline/WLED) - by @blazoncek (AKA Blaz Kristan) and the [SR-WLED team](https://github.com/atuline/WLED/wiki#sound-reactive-wled-fork-team).
+* 2022-11 Updated to align with "[MoonModules/WLED](https://amg.wled.me)" audioreactive usermod - by @softhack007 (AKA Frank M&ouml;hle).
