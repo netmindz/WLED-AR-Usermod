@@ -1,5 +1,5 @@
 {
-  "name": "audioreactive",
+  "name": "wled-audioreactive",
   "build": {
     "libArchive": false,
     "extraScript": "override_sqrt.py"
